@@ -172,6 +172,9 @@ def play_game(board1):
     while letter != 'x' and letter != 'o':
         letter=input("Do you want to play 'x' or 'o'")
     node1=node0
+    if letter=='x':
+        play_board.print_board()
+        print("===============") 
     while winning(play_board)=="no score":
         if play_board.layout.count('x')==play_board.layout.count('o'):
             if letter == 'x':
