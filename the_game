@@ -1,0 +1,181 @@
+"""
+Created on Tue Aug 29 13:54:03 2017
+
+@author: rucsoft
+"""
+
+import numpy as np
+
+class board:
+    def __init__(self,layout=['e','e','e','e','e','e','e','e','e']):
+        self.layout=layout
+        
+    def print_board(self):
+        print (self.layout[0:3])
+        print (self.layout[3:6])
+        print (self.layout[6:9])
+        
+    def change_layout(self, location, letter):
+        layout_value=location[0]*3+location[1]
+        self.layout[layout_value]=letter
+      
+class node:
+    def __init__(self,board, parent, level,score="no score",children=[]):
+        self.board=board
+        self.parent=parent
+        self.level=level
+        self.score=score
+        self.children=children
+        
+    def update_score(self,new_score):
+        self.score=new_score
+        
+def winning(board, letter1='x', letter2='o'):
+    score="no score"
+    if (board.layout[0] ==  letter1 and board.layout[1] == letter1 and board.layout[2]== letter1) \
+    or (board.layout[3]== letter1 and board.layout[4]==letter1 and board.layout[5]==letter1 ) \
+    or (board.layout[6]==letter1 and board.layout[7]==letter1 and board.layout[8]==letter1 ) \
+    or (board.layout[0]==letter1 and board.layout[3]==letter1 and board.layout[6]==letter1 ) \
+    or (board.layout[1]==letter1 and board.layout[4]==letter1 and board.layout[7]==letter1 ) \
+    or (board.layout[2]==letter1 and board.layout[5]==letter1 and board.layout[8] ==letter1) \
+    or (board.layout[0] ==letter1 and board.layout[4]==letter1 and board.layout[8]==letter1 ) \
+    or (board.layout[2]==letter1 and board.layout[4] ==letter1 and board.layout[6]==letter1 ):
+        score = 1
+    if score == "no score" and \
+    (board.layout[0]== letter2 and board.layout[1]==letter2 and board.layout[2] == letter2) \
+    or (board.layout[3]==letter2 and board.layout[4]==letter2 and board.layout[5] == letter2) \
+    or (board.layout[6]==letter2 and board.layout[7]==letter2 and board.layout[8] == letter2 )\
+    or (board.layout[0]==letter2 and board.layout[3]==letter2 and board.layout[6] == letter2) \
+    or (board.layout[1]==letter2 and board.layout[4]==letter2 and board.layout[7] == letter2 )\
+    or (board.layout[2]==letter2 and board.layout[5]==letter2 and board.layout[8] == letter2 )\
+    or (board.layout[0]==letter2 and board.layout[4]==letter2 and board.layout[8] == letter2) \
+    or (board.layout[2]==letter2 and board.layout[4]==letter2 and board.layout[6] == letter2):        
+        score =-1
+    if score == "no score" and 'e' not in board.layout:
+        score=0
+    return score
+
+def create_children(node1):
+    turn='x'
+    new_children=0
+    if node1.score=="no score":
+        new_children=node1.board.layout.count('e')
+        if node1.board.layout.count('x')>node1.board.layout.count('o'):
+            turn='o'
+        else:
+            turn='x'
+        indexes=np.where(np.array(node1.board.layout)=='e')[0]
+        for i in range(0,new_children):
+            '''lists are mutuabel so new_layout=node.board.layout[:]'''
+            new_layout=[i for i in node1.board.layout]
+            new_board=board(new_layout)
+            new_board.layout[indexes[i]]=turn
+            new_parent=node1
+            new_level=node1.level+1
+            score=winning(new_board)
+            children=[]
+            node1.children.append(node(board(new_layout),new_parent,new_level,score,children))
+     
+def create_nodes(node0):
+    tree=[]
+    tree.append(node0)
+    for i in tree:
+        create_children(i)
+        for j in i.children:
+            tree.append(j)
+          
+def minimax(node0):
+    children_score=[]
+    node1=node0
+    while node0.score == "no score":
+        children_score =[]
+        score = winning(node1.board)
+        if score != "no score":
+            node1.score=score
+            node1=node1.parent
+        else:
+            for i in node1.children:
+                if i.score == "no score":
+                    node1= i
+                    break
+                else:
+                    children_score.append(i.score)
+                if len(children_score)== len(node0.children):
+                    node0.score= max(children_score)
+                    break
+                if len(children_score)== len(node1.children) and node1.level%2 == 0:
+                    node1.score= max(children_score)
+                    node1=node1.parent
+                if len(children_score)== len(node1.children) and node1.level%2 == 1:
+                    node1.score= min(children_score)
+                    node1=node1.parent
+
+def human_turn(node1, letter):
+    new_layout=[i for i in node1.board.layout]
+    new_board=board(new_layout)
+    inputs='bad'
+    while inputs=='bad':
+        try:
+            x,y = input("Please enter coordinates 'x' [space] 'y' ").split()
+            if int(x)<3 and int(y)<3:
+                if node1.board.layout[int(x)*3+int(y)] == 'e':
+                    inputs='ok'
+        except ValueError:
+            print("try again")
+    new_board.change_layout([int(x), int(y)], letter)
+    for i in node1.children:
+        if i.board.layout== new_board.layout:
+            node1=i
+    return node1
+    
+
+def comp_turn(node1, letter):
+    children_score=[]
+    '''this picks if the computor is o'''
+    if letter == 'x':
+        for i in node1.children:
+            children_score.append(i.score)
+        indexes=np.where(np.array(children_score)==min(children_score))[0]
+        node1=node1.children[np.random.choice(indexes)]
+    '''this picks if the computor is x'''
+    if letter == 'o':
+        for i in node1.children:
+            children_score.append(i.score)
+        indexes=np.where(np.array(children_score)==max(children_score))[0]
+        node1=node1.children[np.random.choice(indexes)]
+    return node1
+
+    
+def play_game(board1):
+    node0=node(board1,"None",0)
+    create_nodes(node0)
+    minimax(node0)
+    new_layout=[i for i in node0.board.layout]
+    play_board=board(new_layout)
+    letter='b'
+    while letter != 'x' and letter != 'o':
+        letter=input("Do you want to play 'x' or 'o'")
+    node1=node0
+    while winning(play_board)=="no score":
+        if play_board.layout.count('x')==play_board.layout.count('o'):
+            if letter == 'x':
+                node1= human_turn(node1, letter)
+            else:
+                node1= comp_turn(node1, letter)
+        else:
+            if letter == 'o':
+                node1= human_turn(node1, letter)
+            else:
+                node1= comp_turn(node1, letter)
+        new_layout=[i for i in node1.board.layout]
+        play_board=board(new_layout)
+        play_board.print_board()
+        print("===============")
+    if winning(play_board) ==0:
+        print('Cats game')
+    else:
+        print('Computor Wins!')
+
+       
+play = board()
+play_game(play)
