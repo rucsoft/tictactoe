@@ -1,4 +1,3 @@
-"""
 Created on Tue Aug 29 13:54:03 2017
 
 @author: rucsoft
@@ -7,6 +6,7 @@ Created on Tue Aug 29 13:54:03 2017
 import numpy as np
 
 class board:
+    '''This is a basic board. Can be used in any node'''
     def __init__(self,layout=['e','e','e','e','e','e','e','e','e']):
         self.layout=layout
         
@@ -20,6 +20,8 @@ class board:
         self.layout[layout_value]=letter
       
 class node:
+    '''This is a node in the game of tic tac toe. Every node has its current board,
+    its parent node, the level it is on, the score of the node for the minimax algo, and its children'''
     def __init__(self,board, parent, level,score="no score",children=[]):
         self.board=board
         self.parent=parent
@@ -31,6 +33,7 @@ class node:
         self.score=new_score
         
 def winning(board, letter1='x', letter2='o'):
+    '''This will tell if the board has a winning combo on it'''
     score="no score"
     if (board.layout[0] ==  letter1 and board.layout[1] == letter1 and board.layout[2]== letter1) \
     or (board.layout[3]== letter1 and board.layout[4]==letter1 and board.layout[5]==letter1 ) \
@@ -56,6 +59,8 @@ def winning(board, letter1='x', letter2='o'):
     return score
 
 def create_children(node1):
+    '''creates children for the node. This is called in the create_nodes 
+    function that populates every node in the game of tic tac toe'''
     turn='x'
     new_children=0
     if node1.score=="no score":
@@ -77,6 +82,7 @@ def create_children(node1):
             node1.children.append(node(board(new_layout),new_parent,new_level,score,children))
      
 def create_nodes(node0):
+    '''creates every node in tic tac toe. `550,000 nodes'''
     tree=[]
     tree.append(node0)
     for i in tree:
@@ -85,6 +91,10 @@ def create_nodes(node0):
             tree.append(j)
           
 def minimax(node0):
+    '''scores every node in the game of tic tac toe. Parents look at their own
+    board for a winning score. If that is not a winning score they look at their
+    childrens score. This was originally recursive but python did not like 
+    it. It recursed to much'''
     children_score=[]
     node1=node0
     while node0.score == "no score":
@@ -111,6 +121,8 @@ def minimax(node0):
                     node1=node1.parent
 
 def human_turn(node1, letter):
+    '''This is used in the play_game function. It takes in the input from the 
+    human player, validates the move, and then places it on the board'''
     new_layout=[i for i in node1.board.layout]
     new_board=board(new_layout)
     inputs='bad'
@@ -130,6 +142,8 @@ def human_turn(node1, letter):
     
 
 def comp_turn(node1, letter):
+    '''This is used in the play_game function. It picks the optimal move for
+    the computer'''
     children_score=[]
     '''this picks if the computor is o'''
     if letter == 'x':
@@ -147,6 +161,8 @@ def comp_turn(node1, letter):
 
     
 def play_game(board1):
+    '''This is where the game gets played. It is a culmination of a lot of 
+    functions in this program'''
     node0=node(board1,"None",0)
     create_nodes(node0)
     minimax(node0)
